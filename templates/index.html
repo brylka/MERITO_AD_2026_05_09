@@ -7,6 +7,7 @@
 <body>
 <h1>Chatbot</h1>
 <form method="post">
+    <input type="hidden" name="history" value="{{ history_json }}">
     <input type="text" name="prompt">
     <button type="submit">Wyślij</button>
 </form>
