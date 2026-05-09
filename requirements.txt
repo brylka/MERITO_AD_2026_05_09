@@ -1,0 +1,7 @@
+flask
+python-dotenv
+azure-cognitiveservices-speech
+pydub
+openai
+google-genai
+anthropic

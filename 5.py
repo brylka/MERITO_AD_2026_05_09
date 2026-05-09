@@ -22,7 +22,7 @@ def index():
         history.append({"role": "model", "parts": [{"text": response.text}]})
         print(f"GEMINI: {response.text}")
 
-    return render_template("index.html", history=history, history_json=json.dumps(history))
+    return render_template("index2.html", history=history, history_json=json.dumps(history))
 
 if __name__ == '__main__':
     app.run(debug=True)

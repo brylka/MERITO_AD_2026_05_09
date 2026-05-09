@@ -2,17 +2,781 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asystent Głosowy</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            font-weight: 300;
+            font-size: 1.8rem;
+        }
+        
+        /* Panel kontrolny */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            align-items: flex-end;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .controls select, .controls button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #2a2a4a;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        
+        .controls button:hover { background: #3a3a6a; }
+        
+        .btn-clear {
+            background: #5a3a3a !important;
+            border-color: #744 !important;
+        }
+        .btn-clear:hover { background: #744 !important; }
+        
+        .btn-settings {
+            background: #3a4a5a !important;
+            border-color: #567 !important;
+        }
+        .btn-settings:hover { background: #4a5a6a !important; }
+        
+        /* Modal ustawień */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.show { display: flex; }
+        
+        .modal {
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal h2 {
+            color: #4fc3f7;
+            margin-bottom: 15px;
+            font-weight: 400;
+            font-size: 1.2rem;
+        }
+        
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-close:hover { color: #fff; }
+        
+        .prompt-section label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .prompt-presets {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid #4fc3f7;
+            background: transparent;
+            color: #4fc3f7;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover { background: rgba(79, 195, 247, 0.2); }
+        .preset-btn.active {
+            background: #4fc3f7;
+            color: #000;
+        }
+        
+        .prompt-textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #2a2a4a;
+            color: #fff;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 15px;
+        }
+        
+        .prompt-textarea:disabled {
+            background: #222238;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .modal-actions button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-save {
+            background: #4fc3f7;
+            color: #000;
+        }
+        .btn-save:hover { background: #6dd4ff; }
+        
+        .btn-cancel {
+            background: #444;
+            color: #fff;
+        }
+        .btn-cancel:hover { background: #555; }
+        
+        /* Przycisk nagrywania */
+        .record-section { text-align: center; margin-bottom: 15px; }
+        
+        #recordBtn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #4fc3f7;
+            background: rgba(79, 195, 247, 0.1);
+            color: #4fc3f7;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        #recordBtn:hover { background: rgba(79, 195, 247, 0.2); transform: scale(1.05); }
+        
+        #recordBtn.recording {
+            border-color: #ef5350;
+            background: rgba(239, 83, 80, 0.2);
+            color: #ef5350;
+            animation: pulse 1s infinite;
+        }
+        
+        #recordBtn.processing {
+            border-color: #ffb74d;
+            background: rgba(255, 183, 77, 0.2);
+            color: #ffb74d;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .mic-icon { font-size: 2rem; margin-bottom: 5px; }
+        
+        #status {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            color: #888;
+            min-height: 20px;
+        }
+        
+        /* Czat */
+        .chat-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .message.user { flex-direction: row-reverse; }
+        
+        .message-content {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+        
+        .message.user .message-content {
+            background: #4fc3f7;
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: #3a3a5a;
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-text { line-height: 1.4; font-size: 0.9rem; }
+        
+        .message-actions { margin-top: 6px; }
+        
+        .play-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: inherit;
+        }
+        
+        .play-btn:hover { background: rgba(255,255,255,0.3); }
+        
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .message.user .avatar { background: #4fc3f7; }
+        .message.assistant .avatar { background: #7c4dff; }
+        
+        .empty-chat {
+            text-align: center;
+            padding: 30px 20px;
+            color: #666;
+        }
+        
+        .empty-chat .icon { font-size: 2.5rem; margin-bottom: 10px; }
+        
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        
+        #audioPlayer { display: none; }
+        
+        .prompt-info {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
-<h1>Chatbot</h1>
-<form method="post">
-    <input type="hidden" name="history" value="{{ history_json }}">
-    <input type="text" name="prompt">
-    <button type="submit">Wyślij</button>
-</form>
-{% for msg in history %}
-<b>{{ msg.role }}</b>: {{ msg.parts[0].text }}<br>
-{% endfor %}
+    <div class="container">
+        <h1>🎙️ Asystent Głosowy</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Model</label>
+                <select id="modelSelect">
+                    <option value="gemini">Gemini</option>
+                    <option value="claude">Claude</option>
+                    <option value="gpt">GPT</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Głos</label>
+                <select id="voiceSelect">
+                    <option value="pl-PL-MarekNeural">Marek</option>
+                    <option value="pl-PL-ZofiaNeural">Zofia</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn-settings" onclick="openSettings()">⚙️ Ustawienia</button>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn-clear" onclick="clearHistory()">🗑️ Wyczyść</button>
+            </div>
+        </div>
+        
+        <div class="record-section">
+            <button id="recordBtn">
+                <span class="mic-icon">🎤</span>
+                <span class="btn-text">Mów</span>
+            </button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="empty-chat">
+                <div class="icon">💬</div>
+                <p>Naciśnij przycisk i zacznij mówić</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal ustawień -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeSettings()">&times;</button>
+            <h2>⚙️ Ustawienia</h2>
+            
+            <div class="prompt-section">
+                <label>System prompt</label>
+                <div class="prompt-presets">
+                    <button class="preset-btn active" data-preset="0">🎤 Asystent głosowy</button>
+                    <button class="preset-btn" data-preset="1">🎓 Nauczyciel</button>
+                    <button class="preset-btn" data-preset="2">✏️ Własny</button>
+                </div>
+                <textarea class="prompt-textarea" id="promptTextarea" disabled></textarea>
+                <div class="prompt-info" id="promptInfo">Predefiniowany prompt - tylko do odczytu</div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeSettings()">Anuluj</button>
+                <button class="btn-save" onclick="saveSettings()">Zapisz</button>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
+    
+    <script>
+        // Predefiniowane prompty
+        const PRESETS = [
+            `Jesteś pomocnym asystentem głosowym. Odpowiadaj:
+- Zwięźle i na temat (max 2-3 zdania)
+- Naturalnie, jakbyś mówił do kogoś
+- Po polsku
+- Bez formatowania markdown, emoji, list - tylko płynny tekst`,
+            
+            `Jesteś cierpliwym nauczycielem. Wyjaśniaj:
+- Prostym językiem, zrozumiałym dla każdego
+- Krok po kroku, jeśli temat jest złożony
+- Używaj przykładów z życia codziennego
+- Po polsku, krótko i na temat`
+        ];
+        
+        // Stan
+        let currentPreset = 0;
+        let currentSystemPrompt = PRESETS[0];
+        let customPrompt = '';
+        let tempPreset = 0;
+        
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let conversationHistory = [];
+        let isProcessing = false;
+        
+        // Elementy DOM
+        const recordBtn = document.getElementById('recordBtn');
+        const btnText = recordBtn.querySelector('.btn-text');
+        const status = document.getElementById('status');
+        const chatContainer = document.getElementById('chatContainer');
+        const modelSelect = document.getElementById('modelSelect');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const settingsModal = document.getElementById('settingsModal');
+        const promptTextarea = document.getElementById('promptTextarea');
+        const promptInfo = document.getElementById('promptInfo');
+        
+        // Ustawienia - otwórz
+        function openSettings() {
+            tempPreset = currentPreset;
+            updateModalUI();
+            settingsModal.classList.add('show');
+        }
+        
+        // Ustawienia - zamknij
+        function closeSettings() {
+            settingsModal.classList.remove('show');
+        }
+        
+        // Aktualizuj UI modala
+        function updateModalUI() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.preset) === tempPreset);
+            });
+            
+            if (tempPreset === 2) {
+                // Własny - edytowalny, pusty jeśli nie był wcześniej ustawiony
+                promptTextarea.disabled = false;
+                promptTextarea.value = customPrompt;
+                promptInfo.textContent = customPrompt ? 'Własny prompt - możesz edytować' : 'Wpisz własny prompt';
+            } else {
+                // Predefiniowany - tylko do odczytu
+                promptTextarea.disabled = true;
+                promptTextarea.value = PRESETS[tempPreset];
+                promptInfo.textContent = 'Predefiniowany prompt - tylko do odczytu';
+            }
+        }
+
+        // Preset click w modalu
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                tempPreset = parseInt(btn.dataset.preset);
+                updateModalUI();
+            });
+        });
+
+        // Zapisz ustawienia
+        function saveSettings() {
+            const presetChanged = currentPreset !== tempPreset;
+            currentPreset = tempPreset;
+
+            if (currentPreset === 2) {
+                // Własny
+                customPrompt = promptTextarea.value;
+                currentSystemPrompt = customPrompt;
+            } else {
+                // Predefiniowany
+                currentSystemPrompt = PRESETS[currentPreset];
+            }
+
+            // Wyczyść historię przy zmianie presetu
+            if (presetChanged) {
+                clearHistory();
+            }
+
+            closeSettings();
+            setStatus('Ustawienia zapisane');
+            setTimeout(() => setStatus('Gotowy'), 1500);
+        }
+
+        // Czyszczenie historii
+        function clearHistory() {
+            conversationHistory = [];
+            chatContainer.innerHTML = `
+                <div class="empty-chat">
+                    <div class="icon">💬</div>
+                    <p>Naciśnij przycisk i zacznij mówić</p>
+                </div>
+            `;
+            setStatus('Historia wyczyszczona');
+            setTimeout(() => setStatus('Gotowy'), 1500);
+        }
+
+        // Inicjalizacja mikrofonu
+        async function init() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    if (audioChunks.length > 0 && !isProcessing) {
+                        processAudio();
+                    }
+                };
+
+                setStatus('Gotowy');
+            } catch (err) {
+                setStatus('Błąd: brak dostępu do mikrofonu');
+                console.error(err);
+            }
+        }
+
+        // Start nagrywania
+        function startRecording() {
+            if (isProcessing) return;
+
+            audioChunks = [];
+            mediaRecorder.start();
+            recordBtn.classList.add('recording');
+            btnText.textContent = 'Stop';
+            setStatus('Nagrywanie...');
+        }
+
+        // Stop nagrywania
+        function stopRecording() {
+            if (mediaRecorder?.state === 'recording') {
+                mediaRecorder.stop();
+                recordBtn.classList.remove('recording');
+                recordBtn.classList.add('processing');
+                btnText.textContent = 'Czekaj...';
+            }
+        }
+
+        // Przetwarzanie audio
+        async function processAudio() {
+            isProcessing = true;
+            setStatus('Rozpoznawanie mowy...');
+
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioChunks = [];
+
+            // Zapisz audio użytkownika do odtworzenia
+            const userAudioUrl = URL.createObjectURL(audioBlob);
+
+            try {
+                // 1. STT
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'audio.webm');
+
+                const sttResponse = await fetch('/stt', {
+                    method: 'POST',
+                    body: formData
+                });
+                const sttData = await sttResponse.json();
+
+                if (!sttData.success) {
+                    URL.revokeObjectURL(userAudioUrl);
+                    throw new Error(sttData.error || 'Błąd STT');
+                }
+
+                const userText = sttData.text;
+                addMessage('user', userText, userAudioUrl);
+                setStatus('Myślę...');
+
+                // 2. LLM
+                const chatResponse = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: userText,
+                        history: conversationHistory,
+                        model: modelSelect.value,
+                        system_prompt: currentSystemPrompt
+                    })
+                });
+                const chatData = await chatResponse.json();
+
+                if (!chatData.success) {
+                    throw new Error(chatData.error || 'Błąd LLM');
+                }
+
+                const assistantText = chatData.response;
+
+                // Aktualizuj historię
+                conversationHistory.push({ role: 'user', content: userText });
+                conversationHistory.push({ role: 'assistant', content: assistantText });
+
+                addMessage('assistant', assistantText);
+                setStatus('Mówię...');
+
+                // 3. TTS - odtwórz i zapisz wুcache
+                const ttsAudioUrl = await speakTextAndCache(assistantText);
+
+                // Zaktualizuj data-audio w ostatnim przycisku
+                if (ttsAudioUrl) {
+                    const lastBtn = chatContainer.querySelector('.message.assistant:last-child .play-btn');
+                    if (lastBtn) lastBtn.dataset.audio = ttsAudioUrl;
+                }
+
+                setStatus('Gotowy');
+
+            } catch (err) {
+                setStatus('Błąd: ' + err.message);
+                console.error(err);
+            } finally {
+                isProcessing = false;
+                recordBtn.classList.remove('processing');
+                btnText.textContent = 'Mów';
+            }
+        }
+
+        // Cache dla TTS audio
+        const ttsCache = new Map();
+
+        // TTS z cache - zwraca URL audio
+        async function speakTextAndCache(text) {
+            try {
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voiceSelect.value
+                    })
+                });
+
+                if (!response.ok) throw new Error('Błąd TTS');
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                // Zapisz w cache
+                ttsCache.set(text, audioUrl);
+
+                // Odtwórz
+                await new Promise((resolve) => {
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.onended = resolve;
+                    audioPlayer.onerror = resolve;
+                    audioPlayer.play();
+                });
+
+                return audioUrl;
+
+            } catch (err) {
+                console.error('TTS error:', err);
+                return null;
+            }
+        }
+
+        // TTS - sprawdza cache, jeśli brak to pobiera
+        async function speakText(text) {
+            // Sprawdź cache
+            if (ttsCache.has(text)) {
+                playAudio(ttsCache.get(text));
+                return;
+            }
+
+            // Brak w cache - pobierz
+            await speakTextAndCache(text);
+        }
+
+        // Dodaj wiadomość do czatu
+        function addMessage(role, text, audioUrl = null) {
+            const emptyChat = chatContainer.querySelector('.empty-chat');
+            if (emptyChat) emptyChat.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = role === 'user' ? '👤' : '🤖';
+            const msgId = 'msg-' + Date.now();
+
+            messageDiv.innerHTML = `
+                <div class="avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-text">${escapeHtml(text)}</div>
+                    <div class="message-actions">
+                        <button class="play-btn" id="${msgId}" data-text="${escapeAttr(text)}" data-audio="${audioUrl || ''}" data-role="${role}">🔊 Odtwórz</button>
+                    </div>
+                </div>
+            `;
+
+            // Dodaj event listener
+            chatContainer.appendChild(messageDiv);
+            document.getElementById(msgId).addEventListener('click', handlePlayClick);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Obsługa kliknięcia Odtwórz
+        function handlePlayClick(e) {
+            const btn = e.target;
+            const audioUrl = btn.dataset.audio;
+            const text = btn.dataset.text;
+            const role = btn.dataset.role;
+
+            if (audioUrl) {
+                // Mamy zapisane audio - odtwórz
+                playAudio(audioUrl);
+            } else if (role === 'assistant') {
+                // Asystent bez cache - pobierz TTS i zapisz
+                speakTextAndCache(text).then(url => {
+                    if (url) btn.dataset.audio = url;
+                });
+            }
+        }
+
+        // Odtwórz nagranie audio
+        function playAudio(url) {
+            audioPlayer.src = url;
+            audioPlayer.play();
+        }
+
+        // Escape dla atrybutów HTML
+        function escapeAttr(text) {
+            return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\n/g, ' ');
+        }
+
+        // Pomocnicze
+        function setStatus(msg) { status.textContent = msg; }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listeners
+        recordBtn.addEventListener('click', () => {
+            if (isProcessing) return;
+
+            if (mediaRecorder?.state === 'recording') {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // Zamknij modal klikając poza nim
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettings();
+        });
+
+        // Init
+        init();
+    </script>
 </body>
 </html>
