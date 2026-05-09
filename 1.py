@@ -8,7 +8,7 @@ SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
 SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION')
 
 # Tekst do zamiany na mowę
-text = "Witaj świecie! Merito!"
+text = input("Podaj tekst do przeczytania: ")
 
 # Nazwa pliku wyjściowego
 output_file = "mowa.wav"
@@ -20,7 +20,7 @@ speech_config = speechsdk.SpeechConfig(
 )
 
 # Ustaw głos polski (kobieta: Zofia, mężczyzna: Marek)
-speech_config.speech_synthesis_voice_name = "pl-PL-ZofiaNeural"
+speech_config.speech_synthesis_voice_name = "pl-PL-MarekNeural"
 
 # Konfiguracja audio - zapis do pliku
 audio_config = speechsdk.audio.AudioOutputConfig(filename=output_file)
