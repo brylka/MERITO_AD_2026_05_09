@@ -10,6 +10,8 @@
     <input type="text" name="prompt">
     <button type="submit">Wyślij</button>
 </form>
-{{ history }}
+{% for msg in history %}
+<b>{{ msg.role }}</b>: {{ msg.parts[0].text }}<br>
+{% endfor %}
 </body>
 </html>
