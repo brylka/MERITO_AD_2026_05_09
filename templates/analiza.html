@@ -7,14 +7,22 @@
 <body>
 <h1>Analiza tekstu</h1>
 <form method="post">
-    <input type="text" name="text" value="Ala ma kota!">
+    <input type="text" id="text" name="text" value="{{ text }}">
     <button type="submit">Analizuj</button>
 </form>
+<button onclick="czysc()">Czyść</button>
+
 {% if result %}
     <p>Sentyment ogólny: {{ result.sentiment }}</p>
     <p>Pozytywny: {{ result.confidence_scores.positive }}</p>
     <p>Neutralny: {{ result.confidence_scores.neutral }}</p>
     <p>Negatywny: {{ result.confidence_scores.negative }}</p>
 {% endif %}
+
+<script>
+    function czysc() {
+        document.getElementById("text").value = ''
+    }
+</script>
 </body>
 </html>

@@ -24,9 +24,9 @@ def index():
         result = client.analyze_sentiment(documents=documents)[0]
         # print(result)
 
-        return render_template("analiza.html", result=result)
+        return render_template("analiza.html", result=result, text=text)
     else:
-        return render_template("analiza.html")
+        return render_template("analiza.html", text='')
 
 if __name__ == '__main__':
     app.run(debug=True)
