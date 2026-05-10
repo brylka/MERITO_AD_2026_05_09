@@ -1,6 +1,7 @@
 flask
 python-dotenv
 azure-cognitiveservices-speech
+azure-ai-textanalytics
 pydub
 openai
 google-genai
