@@ -13,27 +13,20 @@ LANGUAGE_ENDPOINT = os.getenv('AZURE_LANGUAGE_ENDPOINT')
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        text = "Uwielbiam ten produkt! Działa świetnie i obsługa klienta jest fantastyczna."
+        text = request.form.get('text', '')
 
-        # Konfiguracja klienta Azure
         client = TextAnalyticsClient(
             endpoint=LANGUAGE_ENDPOINT,
             credential=AzureKeyCredential(LANGUAGE_KEY)
         )
 
-        # Analiza tonacji
         documents = [text]
         result = client.analyze_sentiment(documents=documents)[0]
+        # print(result)
 
-        # Sprawdź wynik
-        if not result.is_error:
-            print(f"Sentyment ogólny: {result.sentiment}")
-            print(f"  Pozytywny: {result.confidence_scores.positive:.2f}")
-            print(f"  Neutralny: {result.confidence_scores.neutral:.2f}")
-            print(f"  Negatywny: {result.confidence_scores.negative:.2f}")
-        else:
-            print(f"Błąd: {result.error.message}")
-    return render_template("analiza.html")
+        return render_template("analiza.html", result=result)
+    else:
+        return render_template("analiza.html")
 
 if __name__ == '__main__':
     app.run(debug=True)

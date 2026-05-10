@@ -10,5 +10,11 @@
     <input type="text" name="text" value="Ala ma kota!">
     <button type="submit">Analizuj</button>
 </form>
+{% if result %}
+    <p>Sentyment ogólny: {{ result.sentiment }}</p>
+    <p>Pozytywny: {{ result.confidence_scores.positive }}</p>
+    <p>Neutralny: {{ result.confidence_scores.neutral }}</p>
+    <p>Negatywny: {{ result.confidence_scores.negative }}</p>
+{% endif %}
 </body>
 </html>
