@@ -3,6 +3,11 @@ from azure.core.credentials import AzureKeyCredential
 from dotenv import load_dotenv
 import os
 
+# ZADANIE
+# Przenieść tą aplikacje konsolową do Flaska (webapp)
+# Realizacja pozostałych zadań z dokumentu doc
+
+
 # Pobranie kluczy Azure Language
 load_dotenv()
 LANGUAGE_KEY = os.getenv('AZURE_LANGUAGE_KEY')
